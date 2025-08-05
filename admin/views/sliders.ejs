@@ -1,0 +1,111 @@
+<div class="card mt-5 mx-5">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div><i class="fas fa-images me-2"></i> App Sliders</div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSliderModal">
+        <i class="fas fa-plus"></i> Add Slider Image
+      </button>
+    </div>
+  
+    <div class="card-body">
+      <table id="datatablesSimple" class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Image</th>
+            <th>Created On</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% sliders.forEach((slider, idx) => { %>
+            <tr>
+              <td><%= idx + 1 %></td>
+              <td>
+                <img src="/uploads/sliders/<%= slider.image_path %>" 
+                     alt="Slider Image" class="img-thumbnail" style="height:80px;">
+              </td>
+              <td><%= slider.created_at ? new Date(slider.created_at).toLocaleDateString() : '-' %></td>
+              <td class="">
+                <!-- Edit -->
+                <button class="btn btn-sm btn-warning edit-slider-btn"
+                  data-id="<%= slider.id %>" 
+                  data-image="<%= slider.image_path %>">
+                  <i class="fas fa-edit"></i>
+                </button>
+  
+                <!-- Delete -->
+                <form action="/admin/sliders/delete/<%= slider.id %>" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this slider?')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Add Slider Modal -->
+  <div class="modal fade" id="addSliderModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form action="/admin/sliders/add" method="POST" enctype="multipart/form-data">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Slider Image</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Upload Image</label>
+              <input type="file" name="image" class="form-control" accept="image/*" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Edit Slider Modal -->
+  <div class="modal fade" id="editSliderModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="editSliderForm" method="POST" enctype="multipart/form-data">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Slider Image</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <img id="editSliderPreview" src="" class="img-thumbnail mb-3" style="max-height:150px;">
+            <div class="mb-3">
+              <label class="form-label">Replace Image</label>
+              <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.querySelectorAll('.edit-slider-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const image = btn.dataset.image;
+  
+        document.getElementById('editSliderPreview').src = `/uploads/sliders/${image}`;
+        document.getElementById('editSliderForm').action = `/admin/sliders/edit/${id}`;
+        new bootstrap.Modal(document.getElementById('editSliderModal')).show();
+      });
+    });
+  </script>
+  

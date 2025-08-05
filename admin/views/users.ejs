@@ -1,0 +1,35 @@
+<div class="card mt-5 mx-5">
+    <div class="card-header">
+      <i class="fas fa-users me-1"></i>
+      Registered Users
+    </div>
+    <div class="card-body">
+      <table id="datatablesSimple" class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th>city</th>
+            <th>state</th>
+            <th>Registered On</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(user => { %>
+            <tr>
+              <td><%= user.id %></td>
+              <td><%= user.name || '-' %></td>
+              <td><%= user.email || '-' %></td>
+              <td><%= user.mobile || '-' %></td>
+              <td><%= user.city || '-' %></td>
+              <td><%= user.state || '-' %></td>
+              <td><%= user.created_at ? new Date(user.created_at).toLocaleDateString() : '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  

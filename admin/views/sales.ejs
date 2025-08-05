@@ -1,0 +1,389 @@
+<div class="card mt-5 mx-5">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <i class="fas fa-id-card me-2"></i> Sales Executives
+        </div>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDocModal">
+            <i class="fas fa-plus"></i> Add Sales Executives
+        </button>
+    </div>
+
+    <div class="card-body">
+        <table id="datatablesSimple" class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Document Title</th>
+                    <th>Document</th>
+                    <th>Bank Name</th>
+                    <th>Registered On</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% sales.forEach((doc, idx)=> { %>
+                    <tr>
+                        <td>
+                            <%= idx + 1 %>
+                        </td>
+                        <td>
+                            <%= doc.name || '-' %>
+                        </td>
+                        <td>
+                            <%= doc.contact_number || '-' %>
+                        </td>
+                        <td>
+                            <%= doc.document_title || '-' %>
+                        </td>
+                        <td>
+                            <% if (doc.document_file) { %>
+                                <% if (doc.document_file.endsWith('.pdf')) { %>
+                                    <a href="/uploads/sales/<%= doc.document_file %>" target="_blank">
+                                        <i class="fas fa-file-pdf text-danger" style="font-size:20px;"></i>
+                                    </a>
+                                    <% } else { %>
+                                        <img src="/uploads/sales/<%= doc.document_file %>" alt="Document"
+                                            class="img-thumbnail" style="height:60px; width:auto; cursor:pointer;"
+                                            onclick="window.open('/uploads/sales/<%= doc.document_file %>', '_blank')">
+                                        <% } %>
+                                            <% } else { %>
+                                                <span class="text-muted">No File</span>
+                                                <% } %>
+                        </td>
+
+                        <td>
+                            <%= doc.bank_name || '-' %>
+                        </td>
+                        <td>
+                            <%= doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '-' %>
+                        </td>
+                        <td class="">
+                            <!-- View Button -->
+                            <button class="btn btn-sm btn-info view-doc-btn" data-id="<%= doc.id %>"
+                                data-name="<%= doc.name %>" data-contact="<%= doc.contact_number %>"
+                                data-title="<%= doc.document_title %>" data-document="<%= doc.document_file %>"
+                                data-bank="<%= doc.bank_name %>" data-account-name="<%= doc.bank_account_name %>"
+                                data-account-number="<%= doc.bank_account_number %>" data-ifsc="<%= doc.bank_ifsc %>"
+                                data-passbook="<%= doc.bank_passbook_img %>"
+                                data-verified="<%= doc.verified ? 'Yes' : 'No' %>" data-created="<%= doc.created_at %>">
+                                <i class="fas fa-eye"></i>
+                            </button>
+
+                            <!-- Verify Toggle -->
+                            <button
+                                class="btn btn-sm verify-doc-btn <%= doc.verified ? 'btn-success' : 'btn-secondary' %>"
+                                data-id="<%= doc.id %>" data-status="<%= doc.verified ? 1 : 0 %>">
+                                <i class="fas <%= doc.verified ? 'fa-check' : 'fa-user-check' %>"></i>
+                            </button>
+
+                            <!-- Edit Button -->
+                            <button class="btn btn-sm btn-warning edit-doc-btn" data-bs-toggle="modal"
+                                data-bs-target="#editDocModal" data-id="<%= doc.id %>" data-name="<%= doc.name %>"
+                                data-contact="<%= doc.contact_number %>" data-title="<%= doc.document_title %>"
+                                data-bank="<%= doc.bank_name %>" data-account-name="<%= doc.bank_account_name %>"
+                                data-account-number="<%= doc.bank_account_number %>" data-ifsc="<%= doc.bank_ifsc %>"
+                                data-document="<%= doc.document_file %>" data-passbook="<%= doc.bank_passbook_img %>">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <!-- Delete Button -->
+                            <form action="/admin/sales/delete/<%= doc.id %>" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Delete this document?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal fade" id="viewDocModal" tabindex="-1" aria-labelledby="viewDocLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow border-0">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i> Sales Executives Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body small">
+                <p><strong>Name:</strong> <span id="viewName"></span></p>
+                <p><strong>Contact:</strong> <span id="viewContact"></span></p>
+                <p><strong>Document Title:</strong> <span id="viewTitle"></span></p>
+                <p><strong>Bank Name:</strong> <span id="viewBank"></span></p>
+                <p><strong>Account Name:</strong> <span id="viewAccountName"></span></p>
+                <p><strong>Account Number:</strong> <span id="viewAccountNumber"></span></p>
+                <p><strong>IFSC:</strong> <span id="viewIFSC"></span></p>
+                <p><strong>Registered On:</strong> <span id="viewCreated"></span></p>
+                <p><strong>Verified:</strong> <span id="viewVerified" class="badge bg-secondary"></span></p>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6 text-center">
+                        <h6>Document File</h6>
+                        <div id="viewDocument" class="border p-2" style="min-height:120px;"></div>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <h6>Passbook</h6>
+                        <div id="viewPassbook" class="border p-2" style="min-height:120px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal fade" id="addDocModal" tabindex="-1" aria-labelledby="addDocLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="/admin/sales/add" method="POST" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Sales Executives</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contact</label>
+                            <input type="text" name="contact_number" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Document Title</label>
+                            <input type="text" name="document_title" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bank Name</label>
+                            <input type="text" name="bank_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bank Account Name</label>
+                            <input type="text" name="bank_account_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Account Number</label>
+                            <input type="text" name="bank_account_number" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">IFSC</label>
+                            <input type="text" name="bank_ifsc" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Upload Document</label>
+                            <input type="file" name="document_file" class="form-control"
+                                accept="image/*,application/pdf" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Upload Passbook</label>
+                            <input type="file" name="bank_passbook_img" class="form-control"
+                                accept="image/*,application/pdf">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editDocModal" tabindex="-1" aria-labelledby="editDocLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="editDocForm" method="POST" enctype="multipart/form-data">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title"><i class="fas fa-edit me-2"></i> Edit Sales Executive</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+  
+          <div class="modal-body">
+            <input type="hidden" id="editDocId" name="id">
+  
+            <div class="row g-3">
+              <!-- Left Column -->
+              <div class="col-md-6">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" id="editName" class="form-control" required>
+  
+                <label class="form-label mt-3">Contact</label>
+                <input type="text" name="contact_number" id="editContact" class="form-control" required>
+  
+                <label class="form-label mt-3">Document Title</label>
+                <input type="text" name="document_title" id="editTitle" class="form-control" required>
+  
+                <label class="form-label mt-3">Bank Name</label>
+                <input type="text" name="bank_name" id="editBank" class="form-control" required>
+  
+                <label class="form-label mt-3">Bank Account Name</label>
+                <input type="text" name="bank_account_name" id="editAccountName" class="form-control" required>
+              </div>
+  
+              <!-- Right Column -->
+              <div class="col-md-6">
+                <label class="form-label">Account Number</label>
+                <input type="text" name="bank_account_number" id="editAccountNumber" class="form-control" required>
+  
+                <label class="form-label mt-3">IFSC</label>
+                <input type="text" name="bank_ifsc" id="editIFSC" class="form-control" required>
+  
+                <!-- Previews for current files -->
+                <div class="row mt-3">
+                  <div class="col-12 text-center mb-3">
+                    <h6 class="fw-bold">Current Document</h6>
+                    <div id="editDocPreview" class="border rounded p-2 bg-light" style="min-height:120px;"></div>
+                    <label class="form-label mt-2">Replace Document</label>
+                    <input type="file" name="document_file" class="form-control" accept="image/*,application/pdf">
+                  </div>
+  
+                  <div class="col-12 text-center">
+                    <h6 class="fw-bold">Current Passbook</h6>
+                    <div id="editPassbookPreview" class="border rounded p-2 bg-light" style="min-height:120px;"></div>
+                    <label class="form-label mt-2">Replace Passbook</label>
+                    <input type="file" name="bank_passbook_img" class="form-control" accept="image/*,application/pdf">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+
+<script>
+    // View Modal Population
+    document.querySelectorAll('.view-doc-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('viewName').innerText = btn.dataset.name;
+            document.getElementById('viewContact').innerText = btn.dataset.contact;
+            document.getElementById('viewTitle').innerText = btn.dataset.title;
+            document.getElementById('viewBank').innerText = btn.dataset.bank;
+            document.getElementById('viewAccountName').innerText = btn.dataset.accountName || '-';
+            document.getElementById('viewAccountNumber').innerText = btn.dataset.accountNumber || '-';
+            document.getElementById('viewIFSC').innerText = btn.dataset.ifsc || '-';
+            document.getElementById('viewCreated').innerText = new Date(btn.dataset.created).toLocaleDateString();
+            document.getElementById('viewVerified').innerText = btn.dataset.verified;
+            const docFile = btn.dataset.document;
+            const passbook = btn.dataset.passbook;
+
+            // Render Document (image or PDF)
+            if (docFile) {
+                if (docFile.endsWith('.pdf')) {
+                    document.getElementById('viewDocument').innerHTML = `
+          <a href="/uploads/sales/${docFile}" target="_blank">
+            <i class="fas fa-file-pdf text-danger" style="font-size:40px;"></i>
+          </a>`;
+                } else {
+                    document.getElementById('viewDocument').innerHTML = `
+          <img src="/uploads/sales/${docFile}" class="img-fluid rounded shadow" 
+               style="max-height:200px; cursor:pointer;" 
+               onclick="window.open('/uploads/sales/${docFile}', '_blank')">`;
+                }
+            } else {
+                document.getElementById('viewDocument').innerHTML = '<span class="text-muted">No Document</span>';
+            }
+
+            // Render Passbook (image or PDF)
+            if (passbook) {
+                if (passbook.endsWith('.pdf')) {
+                    document.getElementById('viewPassbook').innerHTML = `
+          <a href="/uploads/sales/${passbook}" target="_blank">
+            <i class="fas fa-file-pdf text-danger" style="font-size:40px;"></i>
+          </a>`;
+                } else {
+                    document.getElementById('viewPassbook').innerHTML = `
+          <img src="/uploads/sales/${passbook}" class="img-fluid rounded shadow" 
+               style="max-height:200px; cursor:pointer;" 
+               onclick="window.open('/uploads/sales/${passbook}', '_blank')">`;
+                }
+            } else {
+                document.getElementById('viewPassbook').innerHTML = '<span class="text-muted">No Passbook</span>';
+            }
+
+            new bootstrap.Modal(document.getElementById('viewDocModal')).show();
+        });
+    });
+
+    // Verify toggle
+    document.querySelectorAll('.verify-doc-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            try {
+                const res = await fetch(`/admin/sales/toggle-verify/${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    btn.dataset.status = data.status;
+                    btn.classList.toggle('btn-success', data.status == 1);
+                    btn.classList.toggle('btn-secondary', data.status == 0);
+                    btn.innerHTML = `<i class="fas ${data.status == 1 ? 'fa-check' : 'fa-user-check'}"></i>`;
+                } else alert('Failed to verify');
+            } catch {
+                alert('Server error while verifying');
+            }
+        });
+    });
+
+    // Edit Modal Prefill
+   // Edit Modal Prefill
+// Function to render preview (image or PDF)
+function renderEditPreview(containerId, file) {
+    const container = document.getElementById(containerId);
+    if (!file) {
+        container.innerHTML = '<span class="text-muted">No File</span>';
+        return;
+    }
+    if (file.endsWith('.pdf')) {
+        container.innerHTML = `<a href="/uploads/sales/${file}" target="_blank">
+            <i class="fas fa-file-pdf text-danger" style="font-size:40px;"></i>
+        </a>`;
+    } else {
+        container.innerHTML = `<img src="/uploads/sales/${file}" class="img-fluid rounded shadow" 
+            style="max-height:120px; cursor:pointer;" onclick="window.open('/uploads/sales/${file}', '_blank')">`;
+    }
+}
+
+// Edit Modal Prefill with previews and values
+document.querySelectorAll('.edit-doc-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Set form action and hidden ID
+        document.getElementById('editDocId').value = btn.dataset.id;
+        document.getElementById('editDocForm').action = `/admin/sales/edit/${btn.dataset.id}`;
+
+        // Fill all text fields
+        document.getElementById('editName').value = btn.dataset.name || '';
+        document.getElementById('editContact').value = btn.dataset.contact || '';
+        document.getElementById('editTitle').value = btn.dataset.title || '';
+        document.getElementById('editBank').value = btn.dataset.bank || '';
+        document.getElementById('editAccountName').value = btn.dataset.accountName || '';
+        document.getElementById('editAccountNumber').value = btn.dataset.accountNumber || '';
+        document.getElementById('editIFSC').value = btn.dataset.ifsc || '';
+
+        // Show previews for existing files
+        renderEditPreview('editDocPreview', btn.dataset.document);
+        renderEditPreview('editPassbookPreview', btn.dataset.passbook);
+    });
+});
+</script>

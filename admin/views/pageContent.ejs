@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= page.title %> Editor</title>
+
+  <!-- CKEditor 5 CDN -->
+  <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      /* display: flex; */
+      justify-content: center;
+      padding: 40px;
+      background: #f5f5f5;
+    }
+
+    .editor-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 1900px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .editor-container input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+
+    .editor-container button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .editor-container button:hover {
+      background-color: #0056b3;
+    }
+
+    .ck-editor__editable_inline {
+      min-height: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="editor-container">
+    <h2>Edit <%= page.title %></h2>
+
+    <form method="POST" action="/admin/pages/<%= page.key %>">
+      <input
+        type="text"
+        name="title"
+        value="<%= page.title %>"
+        placeholder="Page Title"
+        required
+      />
+
+      <!-- CKEditor will replace this textarea -->
+      <textarea id="editor" name="content"><%= page.content %></textarea>
+
+      <button type="submit">Save</button>
+    </form>
+  </div>
+
+  <script>
+    ClassicEditor
+      .create(document.querySelector('#editor'))
+      .catch(error => {
+        console.error(error);
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<div class="card mt-5 mx-5">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div><i class="fas fa-users-cog me-2"></i> Subadmins</div>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSubadminModal">
+      <i class="fas fa-plus"></i> Add Subadmin
+    </button>
+  </div>
+
+  <div class="card-body">
+    <table id="datatablesSimple" class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Mobile</th>
+          <th>Allotted Sections</th>
+          <th>Created On</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% subadmins.forEach((sub, idx) => { %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td><%= sub.name %></td>
+            <td><%= sub.email %></td>
+            <td><%= sub.mobile %></td>
+            <td>
+              <% if (sub.allotted_section) { %>
+                <%= sub.allotted_section.split(',').join(', ') %>
+              <% } else { %>
+                -
+              <% } %>
+            </td>
+            <td><%= sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : '-' %></td>
+            <td>
+              <button class="btn btn-sm btn-warning edit-sub-btn"
+                data-id="<%= sub.id %>"
+                data-name="<%= sub.name %>"
+                data-email="<%= sub.email %>"
+                data-mobile="<%= sub.mobile %>"
+                data-section="<%= sub.allotted_section %>">
+                <i class="fas fa-edit"></i>
+              </button>
+              <form action="/admin/subadmins/delete/<%= sub.id %>" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this subadmin?')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Subadmin Modal -->
+<div class="modal fade" id="addSubadminModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/admin/subadmins/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Subadmin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mobile</label>
+            <input type="text" name="mobile" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Allotted Sections</label>
+            <select name="allotted_section[]" class="form-select section-selector" multiple required>
+              <option value="users">Users</option>
+              <option value="vendors">Vendors</option>
+              <option value="sales">Sales Executives</option>
+              <option value="categories">Categories</option>
+              <option value="sliders">Sliders</option>
+              <option value="subcategories">Subcategories</option>
+              <option value="notifications">Notifications</option>
+              <option value="all">All Access</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Subadmin Modal -->
+<div class="modal fade" id="editSubadminModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editSubadminForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Subadmin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="editSubId">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" id="editSubName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" id="editSubEmail" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mobile</label>
+            <input type="text" name="mobile" id="editSubMobile" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Allotted Sections</label>
+            <select name="allotted_section[]" id="editSubSection" class="form-select section-selector" multiple required>
+              <option value="users">Users</option>
+              <option value="vendors">Vendors</option>
+              <option value="sales">Sales Executives</option>
+              <option value="categories">Categories</option>
+              <option value="sliders">Sliders</option>
+              <option value="subcategories">Subcategories</option>
+              <option value="notifications">Notifications</option>
+              <option value="pages">pages</option>
+              <option value="feedback">feedback</option>
+              <option value="all">All Access</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function () {
+  // Select2 for Add Modal
+  $('#addSubadminModal .section-selector').select2({
+    placeholder: "Select Sections",
+    dropdownParent: $('#addSubadminModal'),
+    width: '100%',
+    allowClear: true
+  });
+
+  // Select2 for Edit Modal
+  $('#editSubSection').select2({
+    placeholder: "Select Sections",
+    dropdownParent: $('#editSubadminModal'),
+    width: '100%',
+    allowClear: true
+  });
+
+  // Pre-fill Edit Modal fields
+  document.querySelectorAll('.edit-sub-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedSections = (btn.dataset.section || '').split(',');
+      $('#editSubSection').val(selectedSections).trigger('change');
+
+      document.getElementById('editSubId').value = btn.dataset.id;
+      document.getElementById('editSubName').value = btn.dataset.name;
+      document.getElementById('editSubEmail').value = btn.dataset.email;
+      document.getElementById('editSubMobile').value = btn.dataset.mobile;
+      document.getElementById('editSubadminForm').action = `/admin/subadmins/edit/${btn.dataset.id}`;
+
+      new bootstrap.Modal(document.getElementById('editSubadminModal')).show();
+    });
+  });
+});
+</script>

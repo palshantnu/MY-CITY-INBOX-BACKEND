@@ -1,0 +1,140 @@
+<div class="card mt-5 mx-5">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div><i class="fas fa-bell me-2"></i> Notifications</div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addNotificationModal">
+        <i class="fas fa-plus"></i> Add Notification
+      </button>
+    </div>
+  
+    <div class="card-body">
+      <table id="datatablesSimple" class="table table-hover align-middle">
+        <thead class="">
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Message</th>
+            <th>Image</th>
+            <th>Created On</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% notifications.forEach((notif, idx) => { %>
+            <tr>
+              <td><%= idx + 1 %></td>
+              <td><%= notif.title %></td>
+              <td><%= notif.message %></td>
+              <td>
+                <% if (notif.image) { %>
+                  <img src="/uploads/notifications/<%= notif.image %>" class="img-thumbnail" style="height:60px;">
+                <% } else { %>
+                  <span class="text-muted">No Image</span>
+                <% } %>
+              </td>
+              <td><%= notif.created_at ? new Date(notif.created_at).toLocaleDateString() : '-' %></td>
+              <td class="">
+                <!-- Edit -->
+                <button class="btn btn-sm btn-warning edit-notif-btn"
+                  data-id="<%= notif.id %>"
+                  data-title="<%= notif.title %>"
+                  data-message="<%= notif.message %>"
+                  data-image="<%= notif.image %>">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <!-- Delete -->
+                <form action="/admin/notifications/delete/<%= notif.id %>" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this notification?')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Add Notification Modal -->
+  <div class="modal fade" id="addNotificationModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form action="/admin/notifications/add" method="POST" enctype="multipart/form-data">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Notification</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input type="text" name="title" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Message</label>
+              <textarea name="message" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Image (Optional)</label>
+              <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Edit Notification Modal -->
+  <div class="modal fade" id="editNotificationModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="editNotificationForm" method="POST" enctype="multipart/form-data">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Notification</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="id" id="editNotifId">
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input type="text" name="title" id="editNotifTitle" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Message</label>
+              <textarea name="message" id="editNotifMessage" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Current Image</label>
+              <div id="editNotifPreview" class="border p-2 mb-2" style="min-height:100px;"></div>
+              <label class="form-label">Replace Image</label>
+              <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.querySelectorAll('.edit-notif-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const img = btn.dataset.image;
+        document.getElementById('editNotifId').value = btn.dataset.id;
+        document.getElementById('editNotifTitle').value = btn.dataset.title;
+        document.getElementById('editNotifMessage').value = btn.dataset.message;
+        document.getElementById('editNotificationForm').action = `/admin/notifications/edit/${btn.dataset.id}`;
+        document.getElementById('editNotifPreview').innerHTML = img
+          ? `<img src="/uploads/notifications/${img}" class="img-fluid" style="max-height:150px;">`
+          : '<span class="text-muted">No Image</span>';
+        new bootstrap.Modal(document.getElementById('editNotificationModal')).show();
+      });
+    });
+  </script>
+  

@@ -1,0 +1,37 @@
+
+
+<div class="container my-4">
+    <h1>Help & Feedback</h1>
+  <table class="table table-striped table-bordered mt-3">
+
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Subject</th>
+        <th>Message</th>
+        <th>Created At</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (feedbacks && feedbacks.length) { %>
+        <% feedbacks.forEach(function(fb, index) { %>
+          <tr>
+            <td><%= index + 1 %></td>
+            <td><%= fb.name %></td>
+            <td><%= fb.email %></td>
+            <td><%= fb.subject %></td>
+            <td><%= fb.message %></td>
+            <td><%= new Date(fb.created_at).toLocaleString() %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr>
+          <td colspan="6" class="text-center text-muted">No feedback found.</td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+
+</div>

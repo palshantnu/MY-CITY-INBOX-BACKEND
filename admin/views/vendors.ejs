@@ -1,0 +1,550 @@
+<form method="GET" class="row row-cols-1 row-cols-md-3 g-3 mb-4 mx-3 align-items-end mt-5">
+  <!-- Date Range Filters -->
+  <div class="col">
+    <label class="form-label">From Date:</label>
+    <input type="date" name="from_date" class="form-control" value="<%= fromDate || '' %>" onchange="this.form.submit()">
+  </div>
+  <div class="col">
+    <label class="form-label">To Date:</label>
+    <input type="date" name="to_date" class="form-control" value="<%= toDate || '' %>" onchange="this.form.submit()">
+  </div>
+
+  <!-- Source Filter -->
+  <div class="col">
+    <label class="form-label">Filter by Source:</label>
+    <select name="source" class="form-select" onchange="this.form.submit()">
+      <option value="all" <%= selectedSource === 'all' ? 'selected' : '' %>>All Vendors</option>
+      <option value="self" <%= selectedSource === 'self' ? 'selected' : '' %>>Self-Registered</option>
+      <option value="sales_executive" <%= selectedSource === 'sales_executive' ? 'selected' : '' %>>By Sales Executive</option>
+      <option value="admin" <%= selectedSource === 'admin' ? 'selected' : '' %>>Added by Admin</option>
+    </select>
+  </div>
+
+  <!-- Sales Executive Filter -->
+  <div class="col">
+    <label class="form-label">Filter by Sales Executive:</label>
+    <select name="sales_id" class="form-select" onchange="this.form.submit()">
+      <option value="">-- All Sales Executives --</option>
+      <% salesExecutives.forEach(s => { %>
+        <option value="<%= s.id %>" <%= selectedSales == s.id ? 'selected' : '' %>><%= s.name %></option>
+      <% }) %>
+    </select>
+  </div>
+
+  <!-- Search -->
+  <div class="col">
+    <label class="form-label">Search Vendors:</label>
+    <div class="input-group">
+      <input type="text" name="search" class="form-control" placeholder="Search by name, city, contact..." value="<%= search %>">
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  </div>
+
+</form>
+
+
+<div class="card mt-5 mx-5">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <i class="fas fa-store me-1"></i> Registered Vendors
+    </div>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addVendorModal">
+      <i class="fas fa-plus"></i> Add Vendor
+    </button>
+  </div>
+
+  <div class="card-body">
+    <table id="datatablesSimple" class="table table-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Shop Name</th>
+          <th>Category</th>
+          <th>Subcategory</th>
+          <th>Address</th>
+          <th>City</th>
+          <th>State</th>
+          <!-- <th>Contact</th> -->
+          <th>Registered On</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% vendors.forEach((vendor, index)=> { %>
+          <tr>
+            <td>
+              <%= index + 1 %>
+            </td>
+            <td>
+              <%= vendor.shop_name %>
+            </td>
+            <td>
+              <%= vendor.category ? vendor.category.name : '-' %>
+            </td>
+            <td>
+              <%= vendor.subcategory ? vendor.subcategory.name : '-' %>
+            </td>
+            <td>
+              <%= vendor.address %>
+            </td>
+            <td>
+              <%= vendor.city || '-' %>
+            </td>
+            <td>
+              <%= vendor.state || '-' %>
+            </td>
+            <!-- <td>
+              <%= vendor.contact_number %>
+            </td> -->
+            <td>
+              <%= vendor.created_at ? new Date(vendor.created_at).toLocaleDateString() : '-' %>
+            </td>
+            <td>
+              <!-- View Details -->
+              <button class="btn btn-sm btn-info view-btn" data-bs-toggle="modal" data-bs-target="#viewVendorModal"
+                data-id="<%= vendor.id %>" data-name="<%= vendor.shop_name %>"
+                data-category="<%= vendor.category ? vendor.category.name : '-' %>"
+                data-subcategory="<%= vendor.subcategory ? vendor.subcategory.name : '-' %>"
+                data-address="<%= vendor.address %>" data-city="<%= vendor.city %>" data-state="<%= vendor.state %>"
+                data-contact="<%= vendor.contact_number %>" data-facilities="<%= vendor.facilities %>"
+                data-created="<%= vendor.created_at ? new Date(vendor.created_at).toLocaleDateString() : '-' %>"
+                data-images="<%= vendor.images ? vendor.images.join(',') : '' %>"
+                data-verified="<%= vendor.verified ? 'Yes' : 'No' %>">
+                <i class="fas fa-eye"></i>
+              </button>
+
+              <!-- Verify Button -->
+              <button class="btn btn-sm verify-btn <%= vendor.verified ? 'btn-success' : 'btn-secondary' %>"
+                data-id="<%= vendor.id %>" data-status="<%= vendor.verified ? 1 : 0 %>">
+                <i class="fas <%= vendor.verified ? 'fa-check' : 'fa-user-check' %>"></i>
+              </button>
+
+              <!-- Edit -->
+              <button class="btn btn-sm btn-warning edit-btn" data-bs-toggle="modal" data-bs-target="#editVendorModal"
+                data-id="<%= vendor.id %>" data-name="<%= vendor.shop_name %>" data-address="<%= vendor.address %>"
+                data-city="<%= vendor.city %>" data-state="<%= vendor.state %>"
+                data-contact="<%= vendor.contact_number %>" data-facilities="<%= vendor.facilities %>"
+                data-category="<%= vendor.category_id %>" data-subcategory="<%= vendor.subcategory_id %>"
+                data-images="<%= vendor.images ? vendor.images.join(',') : '' %>">
+                <i class="fas fa-edit"></i>
+              </button>
+
+              <!-- Delete -->
+              <form action="/admin/vendors/delete/<%= vendor.id %>" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this vendor?')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+      </tbody>
+
+    </table>
+  </div>
+</div>
+
+<!-- View Vendor Modal -->
+<div class="modal fade" id="viewVendorModal" tabindex="-1" aria-labelledby="viewVendorLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md"><!-- Smaller width (md instead of lg) -->
+    <div class="modal-content shadow-sm border-0">
+      <div class="modal-header bg-dark text-white py-2"><!-- Reduced padding -->
+        <h6 class="modal-title mb-0" id="viewVendorLabel">
+          <i class="fas fa-store me-2"></i>Vendor Details
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3"><!-- Less padding -->
+        <!-- Shop Name -->
+        <h6 id="viewShopName" class="text-center fw-bold mb-3"></h6>
+
+        <!-- Compact details grid -->
+        <div class="row g-2 small">
+          <div class="col-6">
+            <p class="mb-1"><strong>Category:</strong> <span id="viewCategory"></span></p>
+          </div>
+          <div class="col-6">
+            <p class="mb-1"><strong>Subcategory:</strong> <span id="viewSubcategory"></span></p>
+          </div>
+          <div class="col-6">
+            <p class="mb-1"><strong>Contact:</strong> <span id="viewContact"></span></p>
+          </div>
+          <div class="col-6">
+            <p class="mb-1"><strong>Verified:</strong>
+              <span id="viewVerified" class="fw-bold badge bg-secondary"></span>
+            </p>
+          </div>
+          <div class="col-12">
+            <p class="mb-1"><strong>Address:</strong> <span id="viewAddress"></span></p>
+          </div>
+          <div class="col-6">
+            <p class="mb-1"><strong>City:</strong> <span id="viewCity"></span></p>
+          </div>
+          <div class="col-6">
+            <p class="mb-1"><strong>State:</strong> <span id="viewState"></span></p>
+          </div>
+          <div class="col-12">
+            <p class="mb-1"><strong>Facilities:</strong> <span id="viewFacilities"></span></p>
+          </div>
+          <div class="col-12">
+            <p class="mb-1"><strong>Registered On:</strong> <span id="viewCreated"></span></p>
+          </div>
+        </div>
+
+        <!-- Vendor Images -->
+        <hr class="my-2">
+        <h6 class="fw-bold small mb-2">Shop Images</h6>
+        <div id="viewImages" class="d-flex flex-wrap gap-2 mt-1">
+          <!-- Images injected dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Add Vendor Modal -->
+<div class="modal fade" id="addVendorModal" tabindex="-1" aria-labelledby="addVendorLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addVendorLabel">Add New Vendor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/admin/vendors/add" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="created_by" value="admin">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Shop Name</label>
+            <input type="text" class="form-control" name="shop_name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select name="category_id" id="addCategorySelect" class="form-control" required>
+              <% categories.forEach(cat=> { %>
+                <option value="<%= cat.id %>">
+                  <%= cat.name %>
+                </option>
+                <% }) %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Subcategory</label>
+            <select name="subcategory_id" id="addSubcategorySelect" class="form-control" required>
+              <option value="">-- Select Subcategory --</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Address</label>
+            <textarea class="form-control" name="address" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contact Number</label>
+            <input type="text" class="form-control" name="contact_number" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" required>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Facilities</label>
+            <textarea class="form-control" name="facilities"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">State</label>
+            <select class="form-control" name="state" id="addStateSelect" required>
+              <option value="">-- Select State --</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">City</label>
+            <select class="form-control" name="city" id="addCitySelect" required>
+              <option value="">-- Select City --</option>
+            </select>
+          </div>
+          
+
+        </div>
+        <div class="mb-3 mx-3">
+          <label class="form-label">Vendor Images</label>
+          <div id="imageInputsContainerAdd">
+            <input type="file" name="images[]" class="form-control mb-2" accept="image/*">
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="addMoreImagesAdd">+ Add More</button>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Save Vendor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Vendor Modal -->
+<div class="modal fade" id="editVendorModal" tabindex="-1" aria-labelledby="editVendorLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editVendorLabel">Edit Vendor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editVendorForm" method="POST" enctype="multipart/form-data">
+        <div class="modal-body">
+          <input type="hidden" name="id" id="editVendorId">
+          <div class="mb-3">
+            <label class="form-label">Shop Name</label>
+            <input type="text" class="form-control" name="shop_name" id="editShopName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select name="category_id" id="editCategorySelect" class="form-control" required>
+              <% categories.forEach(cat=> { %>
+                <option value="<%= cat.id %>">
+                  <%= cat.name %>
+                </option>
+                <% }) %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Subcategory</label>
+            <select name="subcategory_id" id="editSubcategorySelect" class="form-control" required>
+              <option value="">-- Select Subcategory --</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Address</label>
+            <textarea class="form-control" name="address" id="editAddress" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contact</label>
+            <input type="text" class="form-control" name="contact_number" id="editContact" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Facilities</label>
+            <textarea class="form-control" name="facilities" id="editFacilities"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">State</label>
+            <select class="form-control" name="state" id="editStateSelect" required>
+              <option value="">-- Select State --</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">City</label>
+            <select class="form-control" name="city" id="editCitySelect" required>
+              <option value="">-- Select City --</option>
+            </select>
+          </div>
+          
+
+        </div>
+        <div class="mb-3 mx-3">
+          <label class="form-label">Vendor Images</label>
+          <div id="imageInputsContainerEdit">
+            <input type="file" name="images[]" class="form-control mb-2" accept="image/*">
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="addMoreImagesEdit">+ Add More</button>
+          <div class="mt-2" id="existingImagesContainer"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Update Vendor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- Subcategory Fetch ---
+  async function fetchSubcategories(categoryId, targetSelect, selectedId = null) {
+    targetSelect.innerHTML = '<option value="">Loading...</option>';
+    if (!categoryId) {
+      targetSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+      return;
+    }
+    try {
+      const res = await fetch(`/admin/subcategories/${categoryId}`);
+      const data = await res.json();
+      targetSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+      if (Array.isArray(data)) {
+        data.forEach(subcat => {
+          const selected = selectedId == subcat.id ? 'selected' : '';
+          targetSelect.innerHTML += `<option value="${subcat.id}" ${selected}>${subcat.name}</option>`;
+        });
+      }
+    } catch {
+      targetSelect.innerHTML = '<option value="">Error loading</option>';
+    }
+  }
+
+  // --- States & Cities Fetch ---
+  async function loadStates(targetSelect, selectedState = null) {
+    try {
+      const res = await fetch('/admin/states');
+      const states = await res.json();
+      targetSelect.innerHTML = '<option value="">-- Select State --</option>';
+      states.forEach(st => {
+        const selected = selectedState === st ? 'selected' : '';
+        targetSelect.innerHTML += `<option value="${st}" ${selected}>${st}</option>`;
+      });
+    } catch {
+      targetSelect.innerHTML = '<option value="">Error loading states</option>';
+    }
+  }
+
+  async function loadCities(state, targetSelect, selectedCity = null) {
+    try {
+      targetSelect.innerHTML = '<option value="">Loading...</option>';
+      if (!state) {
+        targetSelect.innerHTML = '<option value="">-- Select City --</option>';
+        return;
+      }
+      const res = await fetch(`/admin/cities/${encodeURIComponent(state)}`);
+      const cities = await res.json();
+      targetSelect.innerHTML = '<option value="">-- Select City --</option>';
+      cities.forEach(city => {
+        const selected = selectedCity === city ? 'selected' : '';
+        targetSelect.innerHTML += `<option value="${city}" ${selected}>${city}</option>`;
+      });
+    } catch {
+      targetSelect.innerHTML = '<option value="">Error loading cities</option>';
+    }
+  }
+
+  // --- Initialize Add Modal ---
+  const addStateSelect = document.getElementById('addStateSelect');
+  const addCitySelect = document.getElementById('addCitySelect');
+  loadStates(addStateSelect);
+  addStateSelect.addEventListener('change', () => {
+    loadCities(addStateSelect.value, addCitySelect);
+  });
+
+  const addCategorySelect = document.getElementById('addCategorySelect');
+  const addSubcategorySelect = document.getElementById('addSubcategorySelect');
+  addCategorySelect.addEventListener('change', () => {
+    fetchSubcategories(addCategorySelect.value, addSubcategorySelect);
+  });
+
+  // --- Initialize Edit Modal (single listeners, no duplicates) ---
+  const editStateSelect = document.getElementById('editStateSelect');
+  const editCitySelect = document.getElementById('editCitySelect');
+  const editCategorySelect = document.getElementById('editCategorySelect');
+  const editSubcategorySelect = document.getElementById('editSubcategorySelect');
+
+  // Attach ONCE (not inside the click handler)
+  editStateSelect.addEventListener('change', () => {
+    loadCities(editStateSelect.value, editCitySelect);
+  });
+  editCategorySelect.addEventListener('change', () => {
+  fetchSubcategories(editCategorySelect.value, editSubcategorySelect);
+});
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      // Fill fields
+      document.getElementById('editVendorId').value = btn.dataset.id;
+      document.getElementById('editShopName').value = btn.dataset.name;
+      document.getElementById('editAddress').value = btn.dataset.address;
+      document.getElementById('editContact').value = btn.dataset.contact;
+      document.getElementById('editFacilities').value = btn.dataset.facilities;
+      document.getElementById('editVendorForm').action = `/admin/vendors/edit/${btn.dataset.id}`;
+
+      // Load state/city
+      const state = btn.dataset.state || '';
+      const city = btn.dataset.city || '';
+      await loadStates(editStateSelect, state);
+      await loadCities(state, editCitySelect, city);
+
+      // Load category/subcategory
+      const categoryId = btn.dataset.category;
+      const subcategoryId = btn.dataset.subcategory;
+      editCategorySelect.value = categoryId;
+      await fetchSubcategories(categoryId, editSubcategorySelect, subcategoryId);
+
+      // Handle images
+      const container = document.getElementById('existingImagesContainer');
+      const images = btn.dataset.images ? btn.dataset.images.split(',') : [];
+      container.innerHTML = images.length
+        ? images.map(img => `
+            <div class="position-relative d-inline-block me-2">
+              <img src="/uploads/vendors/${img}" class="img-thumbnail" style="width:100px;height:80px;">
+              <input type="checkbox" name="delete_images[]" value="${img}" class="position-absolute top-0 end-0">
+            </div>`).join('')
+        : '<p>No existing images</p>';
+    });
+  });
+
+  // --- Dynamic Image Upload Fields ---
+  document.getElementById('addMoreImagesAdd').addEventListener('click', () => {
+    document.getElementById('imageInputsContainerAdd').insertAdjacentHTML('beforeend',
+      `<input type="file" name="images[]" class="form-control mb-2" accept="image/*">`);
+  });
+
+  document.getElementById('addMoreImagesEdit').addEventListener('click', () => {
+    document.getElementById('imageInputsContainerEdit').insertAdjacentHTML('beforeend',
+      `<input type="file" name="images[]" class="form-control mb-2" accept="image/*">`);
+  });
+
+  // --- View Vendor Modal ---
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('viewShopName').innerText = btn.dataset.name;
+      document.getElementById('viewCategory').innerText = btn.dataset.category;
+      document.getElementById('viewSubcategory').innerText = btn.dataset.subcategory;
+      document.getElementById('viewAddress').innerText = btn.dataset.address;
+      document.getElementById('viewContact').innerText = btn.dataset.contact;
+      document.getElementById('viewFacilities').innerText = btn.dataset.facilities || '-';
+      document.getElementById('viewCity').innerText = btn.dataset.city || '-';
+      document.getElementById('viewState').innerText = btn.dataset.state || '-';
+      document.getElementById('viewCreated').innerText = btn.dataset.created;
+      document.getElementById('viewVerified').innerText = btn.dataset.verified;
+
+      const imagesContainer = document.getElementById('viewImages');
+      imagesContainer.innerHTML = '';
+      const images = btn.dataset.images ? btn.dataset.images.split(',') : [];
+      images.length
+        ? images.forEach(img => imagesContainer.innerHTML += `<img src="/uploads/vendors/${img}" class="img-thumbnail" style="width:120px;height:100px;">`)
+        : imagesContainer.innerHTML = '<p>No images available</p>';
+    });
+  });
+
+  // --- Verify Button ---
+  document.querySelectorAll('.verify-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const vendorId = btn.dataset.id;
+      try {
+        const res = await fetch(`/admin/vendors/toggle-verify/${vendorId}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          const newStatus = data.status;
+          btn.dataset.status = newStatus;
+          btn.classList.toggle('btn-success', newStatus == 1);
+          btn.classList.toggle('btn-secondary', newStatus == 0);
+          btn.innerHTML = `<i class="fas ${newStatus == 1 ? 'fa-check' : 'fa-user-check'}"></i>`;
+          const verifiedLabel = document.getElementById('viewVerified');
+          if (verifiedLabel && verifiedLabel.closest('.modal.show')) {
+            verifiedLabel.innerText = newStatus == 1 ? 'Yes' : 'No';
+          }
+        } else {
+          alert(data.message || 'Failed to update verification.');
+        }
+      } catch {
+        alert('Server error while verifying vendor.');
+      }
+    });
+  });
+</script>
+
+
