@@ -685,7 +685,7 @@ exports.listBookmarks = async (req, res) => {
       include: [
         {
           model: Vendor,
-          attributes: ['id', 'shop_name', 'address', 'contact_number','images'] // apne fields ke hisab se
+          attributes: ['id', 'shop_name', 'address', 'contact_number', 'images'] // apne fields ke hisab se
         }
       ],
       order: [['createdAt', 'DESC']]
@@ -699,3 +699,73 @@ exports.listBookmarks = async (req, res) => {
   }
 };
 
+exports.loginVendor = async (req, res) => {
+  const { mobile, password } = req.body;
+
+  if (!mobile || !password) {
+    return res.status(400).json({ success: false, message: 'Contact number and password are required.' });
+  }
+
+  try {
+    // Find vendor by contact number
+    const vendor = await Vendor.findOne({ where: { contact_number: mobile } });
+
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found.' });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, vendor.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid password.' });
+    }
+
+    // Remove password before sending response
+    const vendorData = { ...vendor.toJSON() };
+    delete vendorData.password;
+    vendorData.role = 'Vendor';
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      vendor: vendorData
+    });
+  } catch (err) {
+    console.error('Vendor login error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};
+
+
+exports.getVendorProfile = async (req, res) => {
+  const vendorId = req.params.id;
+
+  try {
+    const vendor = await Vendor.findOne({
+      where: { id: vendorId },
+      include: [
+        { model: Category, as: 'category', attributes: ['id', 'name'] },
+        { model: Subcategory, as: 'subcategory', attributes: ['id', 'name'] }
+      ]
+    });
+
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found.' });
+    }
+
+    const vendorData = { ...vendor.toJSON() };
+    delete vendorData.password;
+
+    // Add static role
+    vendorData.role = 'Vendor';
+
+    return res.status(200).json({
+      success: true,
+      vendor: vendorData
+    });
+  } catch (error) {
+    console.error('Get Vendor Profile Error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};

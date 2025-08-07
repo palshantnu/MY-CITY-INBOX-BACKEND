@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getUsers, register, login, getStates, getCitiesByState, registerVendor, getCategories, getSubcategories, registerSalesExecutive, getAllCategories, getVendorsByCityState, getSlider, getVendorsFiltered, getPageByKey, getUserProfile, updateUserProfile, createFeedback, markNotificationSeen, markNotificationsSeen, getNotificationCount, getNotifications, listBookmarks, addBookmark, removeBookmark } = require('../controllers/apiController');
+const { getUsers, register, login, getStates, getCitiesByState, registerVendor, getCategories, getSubcategories, registerSalesExecutive, getAllCategories, getVendorsByCityState, getSlider, getVendorsFiltered, getPageByKey, getUserProfile, updateUserProfile, createFeedback, markNotificationSeen, markNotificationsSeen, getNotificationCount, getNotifications, listBookmarks, addBookmark, removeBookmark, loginVendor, getVendorProfile } = require('../controllers/apiController');
 const multer = require('multer');
 const path = require('path');
 const { submitRating, getVendorReviews } = require('../controllers/ratingController');
@@ -30,6 +30,8 @@ const uploadSalesDocs = multer({ storage: storageSalesDocs });
 router.post('/users-register', register);
 router.post('/users-login', login);
 
+router.post('/vendor-login',loginVendor);
+router.get('/vendor/:id', getVendorProfile);
 
 router.post('/vendors/register', upload.array('images', 10), registerVendor);
 
