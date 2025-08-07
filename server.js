@@ -3,6 +3,7 @@ const app = require('./app');
 const sequelize = require('./config/db');
 const User = require('./models/User'); // ensure model loads
 require('./models/associations');
+require('./models/index');
 
 const PORT = process.env.PORT || 5001;
 

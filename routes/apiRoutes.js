@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getUsers, register, login, getStates, getCitiesByState, registerVendor, getCategories, getSubcategories, registerSalesExecutive, getAllCategories, getVendorsByCityState, getSlider, getVendorsFiltered, getPageByKey, getUserProfile, updateUserProfile, createFeedback, markNotificationSeen, markNotificationsSeen } = require('../controllers/apiController');
+const { getUsers, register, login, getStates, getCitiesByState, registerVendor, getCategories, getSubcategories, registerSalesExecutive, getAllCategories, getVendorsByCityState, getSlider, getVendorsFiltered, getPageByKey, getUserProfile, updateUserProfile, createFeedback, markNotificationSeen, markNotificationsSeen, getNotificationCount, getNotifications, listBookmarks, addBookmark, removeBookmark } = require('../controllers/apiController');
 const multer = require('multer');
 const path = require('path');
 const { submitRating, getVendorReviews } = require('../controllers/ratingController');
@@ -61,6 +61,14 @@ router.get('/profile', getUserProfile);
 // PUT /api/user/update-profile
 router.put('/update-profile', updateUserProfile);
 router.put('/seen/all', markNotificationsSeen);
+router.post('/notification-count', getNotificationCount);
+router.get('/notification', getNotifications);
+
+
+
+router.post('/bookmark/add', addBookmark);
+router.delete('/bookmark/remove', removeBookmark);
+router.get('/bookmark/list', listBookmarks);
 
 router.post('/help-feedback', createFeedback);
 // Route to get cities by state

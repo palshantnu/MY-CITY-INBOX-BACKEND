@@ -9,6 +9,8 @@ const Slider = require('../models/Slider');
 const PageContent = require('../models/PageContent');
 const Feedback = require('../models/Feedback');
 const UserNotification = require('../models/UserNotification');
+const Notification = require('../models/Notification');
+const Bookmark = require('../models/Bookmark');
 
 exports.register = async (req, res) => {
   console.log(req.body);
@@ -563,11 +565,10 @@ exports.createFeedback = async (req, res) => {
 
 exports.markNotificationsSeen = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { userId } = req.body;
 
     const notifications = await UserNotification.findAll({
       where: { user_id: userId, seen: false },
-      order: [['createdAt', 'DESC']], // adjust field name if needed
       limit: 10,
       attributes: ['id']
     });
@@ -590,4 +591,111 @@ exports.markNotificationsSeen = async (req, res) => {
   }
 };
 
+exports.getNotificationCount = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const count = await UserNotification.count({
+      where: { user_id: userId, seen: false }
+    });
+
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.findAll({
+      order: [['created_at', 'DESC']],
+      raw: true
+    });
+
+    return res.json({ success: true, data: notifications });
+  } catch (err) {
+    console.error('getNotifications error:', err);
+    return res.status(500).json({
+      success: false,
+      message:
+        process.env.NODE_ENV === 'production'
+          ? 'Server error'
+          : err.message
+    });
+  }
+};
+
+exports.addBookmark = async (req, res) => {
+  const { user_id, vendor_id } = req.body;
+
+  if (!user_id || !vendor_id) {
+    return res.status(400).json({ success: false, message: 'user_id and vendor_id are required' });
+  }
+
+  try {
+    // Check if already exists
+    const exists = await Bookmark.findOne({ where: { user_id, vendor_id } });
+    if (exists) {
+      return res.status(200).json({ success: true, message: 'Already bookmarked' });
+    }
+
+    const bookmark = await Bookmark.create({ user_id, vendor_id });
+    return res.status(201).json({ success: true, message: 'Bookmark added', data: bookmark });
+
+  } catch (error) {
+    console.error('addBookmark error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Remove bookmark
+exports.removeBookmark = async (req, res) => {
+  const { user_id, vendor_id } = req.body;
+
+  if (!user_id || !vendor_id) {
+    return res.status(400).json({ success: false, message: 'user_id and vendor_id are required' });
+  }
+
+  try {
+    const deleted = await Bookmark.destroy({ where: { user_id, vendor_id } });
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Bookmark not found' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Bookmark removed' });
+
+  } catch (error) {
+    console.error('removeBookmark error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// List bookmarks
+exports.listBookmarks = async (req, res) => {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ success: false, message: 'user_id is required' });
+  }
+
+  try {
+    const bookmarks = await Bookmark.findAll({
+      where: { user_id },
+      include: [
+        {
+          model: Vendor,
+          attributes: ['id', 'shop_name', 'address', 'contact_number','images'] // apne fields ke hisab se
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.status(200).json({ success: true, data: bookmarks });
+
+  } catch (error) {
+    console.error('listBookmarks error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
 
