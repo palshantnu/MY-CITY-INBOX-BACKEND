@@ -769,3 +769,63 @@ exports.getVendorProfile = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 };
+
+exports.updateVendor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      shop_name,
+      address,
+      city,
+      state,
+      contact_number,
+      facilities,
+      category_id,
+      subcategory_id,
+      verified,
+    } = req.body;
+
+    // Find vendor
+    const vendor = await Vendor.findByPk(id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+
+    // If updating contact number, check for duplicates
+    if (contact_number && contact_number !== vendor.contact_number) {
+      const exists = await Vendor.findOne({ where: { contact_number } });
+      if (exists) {
+        return res.status(409).json({ success: false, message: 'Contact number already registered.' });
+      }
+    }
+
+    // Handle image updates (merge old + new)
+    let updatedImages = vendor.images || [];
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => file.filename);
+      updatedImages = [...updatedImages, ...newImages];
+    }
+
+    // If password provided, hash it
+
+
+    // Update vendor fields
+    await vendor.update({
+      shop_name: shop_name ?? vendor.shop_name,
+      address: address ?? vendor.address,
+      city: city ?? vendor.city,
+      state: state ?? vendor.state,
+      contact_number: contact_number ?? vendor.contact_number,
+      facilities: facilities ?? vendor.facilities,
+      category_id: category_id ?? vendor.category_id,
+      subcategory_id: subcategory_id ?? vendor.subcategory_id,
+      verified: 0,
+      images: updatedImages,
+    });
+
+    return res.status(200).json({ success: true, message: 'Vendor updated successfully', vendor });
+  } catch (error) {
+    console.error('Vendor Update Error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
